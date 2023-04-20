@@ -5,6 +5,7 @@ import warnings
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+from IPython.core.display_functions import clear_output
 from tqdm.auto import tqdm
 from math import atan, pi, sqrt
 
@@ -29,6 +30,7 @@ def _load_image(img):
 
 
 def segment_image(img, ratio=0.85, sigma=0):
+    img = np.array(img)
     img = img_as_float(img)
     segments = quickshift(img, ratio=ratio, sigma=sigma)
     return segments
@@ -53,6 +55,7 @@ def create_objects(img, segments):
     """
     Creates objects based on a given segmentation algorithm
     """
+    img = np.array(img)
     image = img_as_float(img)
     segment_ids = np.unique(segments)
 
@@ -110,7 +113,8 @@ def create_hemispherical(image_path):
 
 
 def calculate_svf(img, bi_img):
-    img = img_as_float(img)
+    img = np.array(img)
+    bi_img = np.array(bi_img)
     total_pixels = img.shape[0] * img.shape[0]
     hemisphere_pixels = pi * ((img.shape[0] / 2) ** 2)
     outside_pixels = total_pixels - hemisphere_pixels
@@ -129,7 +133,7 @@ class SkyViewThreshold:
         self.image_path = image_path
         self.img = create_hemispherical(image_path)
         self.threshold = threshold * 255
-        self.gray_img = cv2.cvtColor(self.img, cv2.COLOR_RGB2GRAY)
+        self.gray_img = cv2.cvtColor(np.array(self.img), cv2.COLOR_RGB2GRAY)
         self.binary_img = self.create_binary()
         self.sky_view_factor = calculate_svf(self.img, self.binary_img)
 
@@ -137,14 +141,12 @@ class SkyViewThreshold:
         binary_img = self.gray_img.copy()
         binary_img[binary_img >= self.threshold] = 255
         binary_img[binary_img < self.threshold] = 0
-        return binary_img
+        im = Image.fromarray(binary_img.astype(np.uint8))
+        return im
 
-    def plot_binary(self):
-        im = Image.fromarray(self.binary_img.astype(np.uint8))
-        fig = plt.figure("Binary Threshold Image", figsize=(14, 14))
-        ax = fig.add_subplot(1, 1, 1)
-        ax.imshow(im)
-        plt.axis("off")
+    def plot_binary(self, ax):
+        out = ax.imshow(self.binary_img)
+        return out
 
 
 class SkyViewClassified:
@@ -160,52 +162,51 @@ class SkyViewClassified:
         self.segments = segment_image(self.img)
         self.classified_img = None
         self.sky_view_factor = None
-        # self.objects = create_objects(self.img, self.segments)
-        # self.objects_df = pd.DataFrame(
-        #     columns=['segment_id', 'nobs', 'b1_min', 'b1_max', 'b2_min', 'b2_max', 'b3_min', 'b3_max', 'b1_mean',
-        #              'b2_mean', 'b3_mean', 'b1_variance', 'b2_variance', 'b3_variance', 'b1_skewness', 'b2_skewness',
-        #              'b3_skewness', 'b1_kurtosis', 'b2_kurtosis', 'b3_kurtosis']
-        # )
-        # for i, obj in tqdm(enumerate(self.objects), bar_format='{l_bar}{bar}', desc="Creating object statistics dataframe"):
-        #     row = flatten(obj['stats'])
-        #     self.objects_df.loc[i] = [i] + row
-        # self.objects_df_clean = self.objects_df.dropna()
-        # if training_data_path:
-        #     logging.info('Classifying image...')
-        #     self.training_classes = pd.read_csv(training_data_path)
-        #     self.classified_img = self.classify()
-        #     logging.info('Calculating sky view factor...')
-        #     self.sky_view_factor = calculate_svf(self.img, self.binary_img)
-        # else:
-        #     self.training_classes = pd.DataFrame(
-        #         columns=['class', 'nobs', 'b1_min', 'b1_max', 'b2_min', 'b2_max', 'b3_min', 'b3_max', 'b1_mean', 'b2_mean',
-        #                  'b3_mean', 'b1_variance', 'b2_variance', 'b3_variance', 'b1_skewness', 'b2_skewness',
-        #                  'b3_skewness', 'b1_kurtosis', 'b2_kurtosis', 'b3_kurtosis']
-        #     )
-        #     logging.warning('You must create or import training data in order to calculate the sky view factor')
+        self.objects = create_objects(self.img, self.segments)
+        self.objects_df = pd.DataFrame(
+            columns=['segment_id', 'nobs', 'b1_min', 'b1_max', 'b2_min', 'b2_max', 'b3_min', 'b3_max', 'b1_mean',
+                     'b2_mean', 'b3_mean', 'b1_variance', 'b2_variance', 'b3_variance', 'b1_skewness', 'b2_skewness',
+                     'b3_skewness', 'b1_kurtosis', 'b2_kurtosis', 'b3_kurtosis']
+        )
+        for i, obj in enumerate(tqdm(self.objects, bar_format='{l_bar}{bar}', desc="Creating object statistics dataframe")):
+            row = flatten(obj['stats'])
+            self.objects_df.loc[i] = [i] + row
+        self.objects_df_clean = self.objects_df.dropna()
+        if training_data_path:
+            logging.info('Classifying image...')
+            self.training_classes = pd.read_csv(training_data_path)
+            self.classified_img = self.classify()
+            logging.info('Calculating sky view factor...')
+            self.sky_view_factor = calculate_svf(self.img, self.classified_img)
+        else:
+            self.training_classes = pd.DataFrame(
+                columns=['class', 'nobs', 'b1_min', 'b1_max', 'b2_min', 'b2_max', 'b3_min', 'b3_max', 'b1_mean', 'b2_mean',
+                         'b3_mean', 'b1_variance', 'b2_variance', 'b3_variance', 'b1_skewness', 'b2_skewness',
+                         'b3_skewness', 'b1_kurtosis', 'b2_kurtosis', 'b3_kurtosis']
+            )
+            logging.warning('You must create or import training data in order to calculate the sky view factor')
 
     def plot_rgb(self, ax):
         out = ax.imshow(self.img)
         return out
 
     def plot_segments(self, ax):
-        img = img_as_float(self.img)
+        img = np.array(self.img)
         boundaries = mark_boundaries(img, self.segments)
         out = ax.imshow(boundaries)
         return out
 
-    def plot_classes(self):
-        if not self.classified_img:
-            print('Image has not yet been classified.')
+    def plot_classified(self, ax):
+        if self.classified_img is None:
+            logging.warning('Image has not yet been classified. Aborting.')
             return
-        fig = plt.figure("Classified Hemispherical Image", figsize=(14, 14))
-        ax = fig.add_subplot(1, 1, 1)
-        ax.imshow(self.classified_img)
-        plt.axis("off")
+        out = ax.imshow(self.classified_img)
+        return out
 
-    def create_training_data(self, n_samples=500):
+    def create_training_data(self, n_samples=500, notebook=False):
         sample = random.sample(list(self.objects_df_clean['segment_id'].values), n_samples)
-        img = img_as_float(self.img)
+        img = np.array(self.img)
+        img = img_as_float(img)
         for j, i in enumerate(sample):
             print(f'working on segment {i} ({j}/500)')
             mask = np.ma.masked_where(self.segments != i, self.segments)
@@ -234,10 +235,14 @@ class SkyViewClassified:
             self.training_classes.loc[len(self.training_classes)] = [klass] + list(
                 self.objects_df.loc[self.objects_df['segment_id'] == i].values[0]
             )[1:]
-            # clear_output(wait=True)
+            if notebook:
+                clear_output(wait=True)
 
     def import_training_data(self, training_data_path):
         self.training_classes = pd.read_csv(training_data_path)
+
+    def export_training_data(self, file_name='training.csv'):
+        self.training_classes.to_csv(file_name, index=False)
 
     def classify(self):
         x_train = self.training_classes.drop(['class'], axis=1)
@@ -247,22 +252,11 @@ class SkyViewClassified:
         rf.fit(x_train, y_train)
         y_pred = rf.predict(x_test)
         segment_ids = list(self.objects_df_clean['segment_id'].values)
-        classified_img = self.img.copy()
+        classified_img = img_as_float(np.array(self.img)).copy()
         for i, segment_id in enumerate(segment_ids):
             idx = np.argwhere(self.segments == segment_id)
             for j in idx:
                 classified_img[j[0], j[1], 0] = y_pred[i]
-
-        return classified_img[:, :, 0]
-
-    def calculate_svf(self):
-        if not self.classified_img:
-            print('Image has not yet been classified.')
-            return
-        total_pixels = self.img.shape[0] * self.img.shape[0]
-        hemisphere_pixels = pi * ((self.img.shape[0] / 2) ** 2)
-        outside_pixels = total_pixels - hemisphere_pixels
-
-        black_pixels = total_pixels - np.sum(self.classified_img / 255) - outside_pixels
-        svf = (hemisphere_pixels - black_pixels) / hemisphere_pixels
-        return svf
+        clf = classified_img[:, :, 0]
+        im = Image.fromarray(clf.astype(np.uint8))
+        return im
