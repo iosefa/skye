@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="skye",
-    version="0.0.3",
+    version="0.0.4",
     author="Iosefa Percival",
     author_email="ipercival@gmail.com",
     description="360-degree image analysis for forest ecology",
@@ -21,6 +21,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
+        'ipython>=8.12.0',
         'matplotlib>=3.7.1',
         'numpy>=1.24.2',
         'opencv-python>=4.7.0.72',
