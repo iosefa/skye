@@ -1,16 +1,15 @@
 import random
 import logging
 import warnings
-
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import scipy
+
 from IPython.core.display_functions import clear_output
 from tqdm.auto import tqdm
 from math import atan, pi, sqrt
-
-import pandas as pd
-import scipy
 from PIL import Image
 from skimage import io
 from skimage.segmentation import quickshift
@@ -229,8 +228,8 @@ class SkyViewClassified:
             plt.axis([x_min, x_max, y_min, y_max])
             plt.show()
 
-            klass = input("Enter class or type 'end' to end.")
-            if klass == 'end':
+            klass = input("Enter class or type 'I give up!' to end.")
+            if klass.lower() == 'i give up!':
                 break
             self.training_classes.loc[len(self.training_classes)] = [klass] + list(
                 self.objects_df.loc[self.objects_df['segment_id'] == i].values[0]
