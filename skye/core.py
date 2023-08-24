@@ -397,3 +397,34 @@ class SkyView:
     def calculate_svf(self):
         self.sky_view_factor = calculate_svf(self.img, self.classified_img)
         return self.sky_view_factor
+
+    def compute_gap_fractions(self):
+        bin_img = np.array(self.classified_img)
+        center_x = bin_img.shape[1] // 2
+        center_y = bin_img.shape[0] // 2
+
+        angles = np.linspace(0, 90, 89)
+        max_radius = min(center_x, center_y)
+        radii = (angles / 90) * max_radius
+
+        gap_fractions = []
+
+        for r in radii:
+            y, x = np.ogrid[-center_y:bin_img.shape[0] - center_y, -center_x:bin_img.shape[1] - center_x]
+            mask = x * x + y * y <= r * r
+            total_pixels = np.sum(mask)
+            sky_pixels = total_pixels - np.sum(bin_img[mask] / 255)
+            gap_fraction = sky_pixels / total_pixels
+
+            gap_fractions.append(gap_fraction)
+
+        return gap_fractions
+
+    def calculate_LAI(self, gap_fractions):
+        angles = np.array([7, 23, 38, 53, 68])
+        wi = np.array([0.034, 0.104, 0.160, 0.218, 0.494])
+        deg2rad = np.pi / 180
+        T = [gap_fractions[int(a)] for a in angles]
+        LAI = 2 * np.sum(-np.log(T) * wi * np.cos(angles * deg2rad))
+
+        return LAI
