@@ -10,6 +10,24 @@ from ..utils.utils import create_circular_mask
 
 
 def load_equirectangular(image):
+    """
+    Converts an equirectangular image to a hemispherical image and loads it as a SkyView object.
+
+    This function processes an equirectangular image, applies a circular mask, and returns
+    the image as a SkyView object with associated metadata.
+
+    Args:
+        image (str): Path to the equirectangular image file.
+
+    Returns:
+        SkyView: An object representing the hemispherical view with associated metadata.
+
+    Raises:
+        Exception: If the image cannot be loaded.
+
+    Example:
+        >>> sky_view = load_equirectangular("path/to/equirectangular_image.jpg")
+    """
     image = _load_image(image)
     img = np.array(image)
     dim1 = img.shape[0]

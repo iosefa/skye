@@ -11,6 +11,28 @@ from ..segmentation.segment import SegmentsFrame
 
 def create_training_data(image, segments, segment_statistics, n_samples=500, training_data=None,
                          notebook=False, save_segment_path=None, image_name='image'):
+    """
+    Interactively create training data for image classification.
+
+    This function allows users to manually classify segments of an image as either sky or non-sky,
+    creating a dataset for training image classification models.
+
+    Args:
+        image (Image): The input image.
+        segments (numpy.ndarray): Segmented image data.
+        segment_statistics (DataFrame): Statistics for each segment in the image.
+        n_samples (int, optional): Number of samples to include. Defaults to 500.
+        training_data (SegmentsFrame, optional): DataFrame to append training data to. Defaults to None, which will create a new SegmentsFrame.
+        notebook (bool, optional): Flag to indicate if function is run in a Jupyter notebook environment. Defaults to False.
+        save_segment_path (str, optional): Path to save images of the segments. Defaults to None.
+        image_name (str, optional): Base name for saved segment images. Defaults to 'image'.
+
+    Returns:
+        SegmentsFrame: A DataFrame containing the training data.
+
+    Example:
+        >>> training_data = create_training_data(image, segments, segment_stats, n_samples=100, save_segment_path='/path/to/save')
+    """
     training_data = training_data if not None else SegmentsFrame()
     img = np.array(image)
     img = img_as_float(img)

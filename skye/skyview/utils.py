@@ -9,6 +9,24 @@ from ..utils.utils import create_circular_mask
 
 
 def enhance(sky_view, clip_limit=3, grid_size=(4, 4), all_channels=False):
+    """
+    Enhances the contrast of an image using CLAHE (Contrast Limited Adaptive Histogram Equalization).
+
+    Args:
+        sky_view (SkyView): An instance of the SkyView class containing the image to be enhanced.
+        clip_limit (int, optional): Threshold for contrast limiting. Defaults to 3.
+        grid_size (tuple, optional): Size of the grid for histogram equalization. Defaults to (4, 4).
+        all_channels (bool, optional): Flag to apply enhancement on all color channels. Defaults to False.
+
+    Returns:
+        SkyView: The SkyView object with the enhanced image.
+
+    Raises:
+        TypeError: If the 'sky_view' object is not an instance of class SkyView.
+
+    Example:
+        >>> enhanced_sky_view = enhance(sky_view, clip_limit=4, grid_size=(8, 8))
+    """
     if not isinstance(sky_view, SkyView):
         raise TypeError("The 'sky_view' object must be an instance of class SkyView.")
 
@@ -45,6 +63,23 @@ def enhance(sky_view, clip_limit=3, grid_size=(4, 4), all_channels=False):
 
 
 def gamma_correction(sky_view, gamma=1, gain=1):
+    """
+    Applies gamma correction to an image.
+
+    Args:
+        sky_view (SkyView): An instance of the SkyView class containing the image to be corrected.
+        gamma (float, optional): Non-negative real number indicating the gamma value. Defaults to 1.
+        gain (float, optional): The constant multiplier. Defaults to 1.
+
+    Returns:
+        SkyView: The SkyView object with the gamma-corrected image.
+
+    Raises:
+        TypeError: If the 'sky_view' object is not an instance of class SkyView.
+
+    Example:
+        >>> corrected_sky_view = gamma_correction(sky_view, gamma=0.5)
+    """
     if not isinstance(sky_view, SkyView):
         raise TypeError("The 'sky_view' object must be an instance of class SkyView.")
     img = np.array(sky_view.image)
