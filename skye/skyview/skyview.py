@@ -163,23 +163,36 @@ class SkyView:
         else:
             raise ValueError("No image available to save.")
 
-    def replace_image(self, new_image_path):
+    def save_classified_as_jpeg(self, file_path):
+        """
+        Saves the current image as a JPEG file.
+
+        Args:
+            file_path (str): The path where the JPEG image will be saved.
+        """
+        if self.classified_image is not None:
+            self.classified_image.image.save(file_path, format='JPEG')
+        else:
+            raise ValueError("No image available to save.")
+
+    def replace_image(self, new_image_path, destroy_metadata=True):
         """
         Replaces the current image with a new image from the given path.
 
         Args:
             new_image_path (str): The path to the new image file.
+            destroy_metadata (bool): Sets metadata to None if True.
         """
         try:
             self.image = Image.open(new_image_path)
-            # Reset other attributes as they might not apply to the new image
-            self.segmented_image = None
-            self.training_data = None
-            self.validation_data = None
-            self.classified_image = None
-            self.enhanced = False
-            self.gamma_corrected = False
-            self.enhancement_params = None
-            self.gamma_params = None
+            if destroy_metadata:
+                self.segmented_image = None
+                self.training_data = None
+                self.validation_data = None
+                self.classified_image = None
+                self.enhanced = False
+                self.gamma_corrected = False
+                self.enhancement_params = None
+                self.gamma_params = None
         except Exception as e:
             raise ValueError(f"Failed to load new image from {new_image_path}: {e}")
